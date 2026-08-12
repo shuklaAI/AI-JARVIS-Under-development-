@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">SATAN Connect</string>
+    <string name="accessibility_service_description">SATAN Connect accessibility bridge for device control setup.</string>
+</resources>
