@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SATAN 3D WebGL Living AI Background</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #050505; }
+    #canvas-container { width: 100%; height: 100%; position: absolute; inset: 0; }
+    #blood-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+  </style>
+  <script src="three.min.js"></script>
+  <script src="OrbitControls.js"></script>
+  <script src="CopyShader.js"></script>
+  <script src="LuminosityHighPassShader.js"></script>
+  <script src="EffectComposer.js"></script>
+  <script src="RenderPass.js"></script>
+  <script src="ShaderPass.js"></script>
+  <script src="UnrealBloomPass.js"></script>
+</head>
+<body>
+  <div id="canvas-container"></div>
+  <canvas id="blood-overlay"></canvas>
+
+  <script>
+    const container = document.getElementById("canvas-container");
+    const width = Math.max(1, container.clientWidth || window.innerWidth);
+    const height = Math.max(1, container.clientHeight || window.innerHeight);
+
+    // ——— SCENE & CAMERA ———
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x050505, 0.04);
+
+    const camera = new THREE.PerspectiveCamera(55, width / height, 0.1, 500);
+    camera.position.set(0, 0, 10.0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 0.9;
+    container.appendChild(renderer.domElement);
+
+    // ——— POST PROCESSING ———
+    const composer = new THREE.EffectComposer(renderer);
+    composer.addPass(new THREE.RenderPass(scene, camera));
+
+    const bloom = new THREE.UnrealBloomPass(
+      new THREE.Vector2(width, height),
+      2.8, // strength
+      0.7, // radius
+      0.12  // threshold
+    );
+    composer.addPass(bloom);
+
+    const chromaticShader = {
+      uniforms: {
+        tDiffuse: { value: null },
+        uTime: { value: 0 },
+        uIntensity: { value: 0.003 }
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D tDiffuse;
+        uniform float uTime;
+        uniform float uIntensity;
+        varying vec2 vUv;
+        void main() {
+          vec2 dir = vUv - vec2(0.5);
+          float d = length(dir);
+          float offset = uIntensity * d;
+          float flicker = 1.0 + 0.02 * sin(uTime * 30.0) * sin(uTime * 7.3);
+          vec4 cr = texture2D(tDiffuse, vUv + dir * offset);
+          vec4 cg = texture2D(tDiffuse, vUv);
+          vec4 cb = texture2D(tDiffuse, vUv - dir * offset * 0.5);
+          gl_FragColor = vec4(cr.r * 1.3, cg.g * 0.4, cb.b * 0.3, 1.0) * flicker;
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb * vec3(1.4, 0.2, 0.15), 0.3);
+        }
+      `
+    };
+    const chromaticPass = new THREE.ShaderPass(chromaticShader);
+    composer.addPass(chromaticPass);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.04;
+    controls.minDistance = 0.6;
+    controls.maxDistance = 40;
+    controls.zoomSpeed = 1.4;
+    controls.enablePan = false;
+
+    // ——— COLORS (BLOOD RED PALETTE) ———
+    const C_BRIGHT = 0xcc0000;
+    const C_MID    = 0x8b0000;
+    const C_DIM    = 0x550000;
+    const C_FAINT  = 0x330000;
+    const C_HOT    = 0xff3333;
+    const C_EMBER  = 0xff1a1a;
+
+    // ——— BACKGROUND ATMOSPHERE (STARS & DUST) ———
+    const atmosphereGroup = new THREE.Group();
+    scene.add(atmosphereGroup);
+
+    // Faint grid floor
+    const gridHelper = new THREE.GridHelper(60, 40, 0x550000, 0x220000);
+    gridHelper.position.y = -4.5;
+    gridHelper.material.opacity = 0.08;
+    gridHelper.material.transparent = true;
+    atmosphereGroup.add(gridHelper);
+
+    // Starfield (dimmer, redder)
+    const starCount = 1200;
+    const starGeo = new THREE.BufferGeometry();
+    const starPos = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount; i++) {
+      starPos[i * 3]     = (Math.random() - 0.5) * 80;
+      starPos[i * 3 + 1] = (Math.random() - 0.5) * 80;
+      starPos[i * 3 + 2] = (Math.random() - 0.5) * 80;
+    }
+    starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starPos, 3));
+    const starMat = new THREE.PointsMaterial({
+      color: 0xff6666,
+      size: 0.03,
+      transparent: true,
+      opacity: 0.3,
+      blending: THREE.AdditiveBlending
+    });
+    const starPoints = new THREE.Points(starGeo, starMat);
+    atmosphereGroup.add(starPoints);
+
+    // ——— HELPER FUNCTIONS ———
+    function lineMat(color, opacity = 1) {
+      return new THREE.LineBasicMaterial({
+        color,
+        transparent: true,
+        opacity,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+    }
+
+    // ——— PENTAGRAM GROUP ———
+    const pentagramGroup = new THREE.Group();
+    scene.add(pentagramGroup);
+
+    // Generate inverted pentagram points (point-down)
+    function getPentagramPoints(radius, invert = true) {
+      const pts = [];
+      const offset = invert ? Math.PI : Math.PI / 2;
+      for (let i = 0; i < 5; i++) {
+        const angle = offset + (i * 2 * Math.PI) / 5;
+        pts.push(new THREE.Vector3(
+          radius * Math.cos(angle),
+          radius * Math.sin(angle),
+          0
+        ));
+      }
+      return pts;
+    }
+
+    // LAYER 1: OUTER CIRCLE (ritual circle)
+    const circleGroup = new THREE.Group();
+    const CIRCLE_R = 2.2;
+    const circleSegs = 200;
+
+    // Main outer circle
+    for (let ring = 0; ring < 3; ring++) {
+      const r = CIRCLE_R + ring * 0.04;
+      const opacity = ring === 0 ? 0.9 : 0.3;
+      const circlePts = [];
+      for (let i = 0; i <= circleSegs; i++) {
+        const a = (i / circleSegs) * Math.PI * 2;
+        circlePts.push(new THREE.Vector3(r * Math.cos(a), r * Math.sin(a), 0));
+      }
+      circleGroup.add(new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(circlePts),
+        lineMat(ring === 0 ? C_BRIGHT : C_MID, opacity)
+      ));
+    }
+
+    // Inner circle touching the star points
+    const INNER_R = 2.0;
+    const innerCirclePts = [];
+    for (let i = 0; i <= circleSegs; i++) {
+      const a = (i / circleSegs) * Math.PI * 2;
+      innerCirclePts.push(new THREE.Vector3(INNER_R * Math.cos(a), INNER_R * Math.sin(a), 0));
+    }
+    circleGroup.add(new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(innerCirclePts),
+      lineMat(C_BRIGHT, 0.7)
+    ));
+    pentagramGroup.add(circleGroup);
+
+    // LAYER 2: INVERTED PENTAGRAM STAR
+    const starGroup = new THREE.Group();
+    const starPts = getPentagramPoints(INNER_R, true);
+
+    // Draw the star (connect every other point: 0→2→4→1→3→0)
+    const starOrder = [0, 2, 4, 1, 3, 0];
+    for (let thickness = 0; thickness < 4; thickness++) {
+      const offset = (thickness - 1.5) * 0.015;
+      const starLinePts = starOrder.map(i => {
+        const p = starPts[i].clone();
+        p.x += offset * (Math.random() - 0.5);
+        p.y += offset * (Math.random() - 0.5);
+        return p;
+      });
+      const opacity = thickness === 0 ? 1.0 : 0.4;
+      starGroup.add(new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(starLinePts),
+        lineMat(thickness === 0 ? C_HOT : C_BRIGHT, opacity)
+      ));
+    }
+    pentagramGroup.add(starGroup);
+
+    // LAYER 3: INNER PENTAGON (formed by the star intersections)
+    const pentagonGroup = new THREE.Group();
+
+    // Calculate intersection points of the star lines to form inner pentagon
+    function lineIntersection(p1, p2, p3, p4) {
+      const x1 = p1.x, y1 = p1.y, x2 = p2.x, y2 = p2.y;
+      const x3 = p3.x, y3 = p3.y, x4 = p4.x, y4 = p4.y;
+      const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+      if (Math.abs(denom) < 0.0001) return null;
+      const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
+      return new THREE.Vector3(x1 + t * (x2 - x1), y1 + t * (y2 - y1), 0);
+    }
+
+    const starLines = [
+      [starPts[0], starPts[2]],
+      [starPts[2], starPts[4]],
+      [starPts[4], starPts[1]],
+      [starPts[1], starPts[3]],
+      [starPts[3], starPts[0]],
+    ];
+
+    const innerPentagonPts = [];
+    for (let i = 0; i < 5; i++) {
+      const j = (i + 2) % 5;
+      const pt = lineIntersection(
+        starLines[i][0], starLines[i][1],
+        starLines[j][0], starLines[j][1]
+      );
+      if (pt) innerPentagonPts.push(pt);
+    }
+    if (innerPentagonPts.length === 5) {
+      innerPentagonPts.push(innerPentagonPts[0].clone());
+      pentagonGroup.add(new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(innerPentagonPts),
+        lineMat(C_MID, 0.5)
+      ));
+    }
+    pentagramGroup.add(pentagonGroup);
+
+    // LAYER 4: Ritual runes / tick marks around the circle
+    const runeGroup = new THREE.Group();
+    for (let i = 0; i < 36; i++) {
+      const angle = (i / 36) * Math.PI * 2;
+      const innerR = CIRCLE_R + 0.15;
+      const outerR = i % 6 === 0 ? CIRCLE_R + 0.35 : CIRCLE_R + 0.22;
+      const color = i % 6 === 0 ? C_BRIGHT : C_DIM;
+      const opacity = i % 6 === 0 ? 0.7 : 0.25;
+      const pts = [
+        new THREE.Vector3(innerR * Math.cos(angle), innerR * Math.sin(angle), 0),
+        new THREE.Vector3(outerR * Math.cos(angle), outerR * Math.sin(angle), 0)
+      ];
+      runeGroup.add(new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(pts),
+        lineMat(color, opacity)
+      ));
+    }
+    pentagramGroup.add(runeGroup);
+
+    // LAYER 5: INNERMOST CORE (glowing center)
+    const coreR = 0.25;
+    const icoGeo = new THREE.IcosahedronGeometry(coreR, 1);
+    const icoEdges = new THREE.EdgesGeometry(icoGeo);
+    const icoWireMat = lineMat(C_HOT, 0.9);
+    const icoWire = new THREE.LineSegments(icoEdges, icoWireMat);
+    pentagramGroup.add(icoWire);
+
+    const coreSphereMat = new THREE.MeshBasicMaterial({
+      color: C_HOT,
+      transparent: true,
+      opacity: 0.15,
+      blending: THREE.AdditiveBlending
+    });
+    const coreSphere = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), coreSphereMat);
+    pentagramGroup.add(coreSphere);
+
+    const glowSphereMat = new THREE.MeshBasicMaterial({
+      color: C_MID,
+      transparent: true,
+      opacity: 0.06,
+      blending: THREE.AdditiveBlending
+    });
+    const glowSphere = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16), glowSphereMat);
+    pentagramGroup.add(glowSphere);
+
+    // Electric Arcs Group (for active states)
+    const electricArcsGroup = new THREE.Group();
+    const arcMat = lineMat(C_EMBER, 0.85);
+    for (let a = 0; a < 6; a++) {
+      const arcPts = [];
+      for (let p = 0; p <= 12; p++) {
+        arcPts.push(new THREE.Vector3(
+          (Math.random() - 0.5) * 1.8,
+          (Math.random() - 0.5) * 1.8,
+          (Math.random() - 0.5) * 1.8
+        ));
+      }
+      const arcLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(arcPts), arcMat);
+      electricArcsGroup.add(arcLine);
+    }
+    electricArcsGroup.visible = false;
+    pentagramGroup.add(electricArcsGroup);
+
+    // DUST PARTICLES (blood red)
+    const dustCount = 4500;
+    const dustPositions = new Float32Array(dustCount * 3);
+    for (let i = 0; i < dustCount; i++) {
+      const rr = 0.5 + Math.pow(Math.random(), 0.6) * 10;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      dustPositions[i * 3]     = rr * Math.sin(phi) * Math.cos(theta);
+      dustPositions[i * 3 + 1] = rr * Math.cos(phi);
+      dustPositions[i * 3 + 2] = rr * Math.sin(phi) * Math.sin(theta);
+    }
+    const dustGeo = new THREE.BufferGeometry();
+    dustGeo.setAttribute("position", new THREE.Float32BufferAttribute(dustPositions, 3));
+
+    const dotC = document.createElement("canvas");
+    dotC.width = dotC.height = 64;
+    const dCtx = dotC.getContext("2d");
+    const g = dCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, "rgba(255,40,40,1)");
+    g.addColorStop(0.2, "rgba(200,0,0,0.6)");
+    g.addColorStop(0.5, "rgba(139,0,0,0.15)");
+    g.addColorStop(1, "rgba(80,0,0,0)");
+    dCtx.fillStyle = g;
+    dCtx.fillRect(0, 0, 64, 64);
+
+    const dustMat = new THREE.PointsMaterial({
+      map: new THREE.CanvasTexture(dotC),
+      size: 0.08,
+      transparent: true,
+      opacity: 0.65,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      sizeAttenuation: true,
+      color: C_BRIGHT
+    });
+    const dustPoints = new THREE.Points(dustGeo, dustMat);
+    pentagramGroup.add(dustPoints);
+
+    // ——— REACTIVE SATAN STATE CONTROLLER ———
+    let currentState = "IDLE";
+    let targetScale = 1.0;
+    let currentScale = 1.0;
+    let rotSpeedZ = 0.0015;
+    let targetCameraZ = 5.8;
+    let currentCameraZ = 5.8;
+    let warpSpeed = 0;
+
+    window.setSatanState = function(state) {
+      if (!state) return;
+      currentState = String(state).toUpperCase();
+      console.log("SATAN 3D StateChanged:", currentState);
+
+      if (currentState === "LISTENING") {
+        targetScale = 1.30;
+        rotSpeedZ = 0.004;
+        electricArcsGroup.visible = false;
+        targetCameraZ = 5.2;
+        if (window.setBloodIntensity) window.setBloodIntensity(1.4);
+      } else if (currentState === "THINKING") {
+        targetScale = 1.15;
+        rotSpeedZ = 0.012;
+        electricArcsGroup.visible = true;
+        targetCameraZ = 5.8;
+        if (window.setBloodIntensity) window.setBloodIntensity(1.8);
+      } else if (currentState === "EXECUTING") {
+        targetScale = 1.25;
+        rotSpeedZ = 0.020;
+        electricArcsGroup.visible = true;
+        targetCameraZ = 5.6;
+        if (window.setBloodIntensity) window.setBloodIntensity(2.2);
+      } else if (currentState === "SPEAKING") {
+        targetScale = 1.40;
+        rotSpeedZ = 0.025;
+        electricArcsGroup.visible = false;
+        targetCameraZ = 4.4;
+        if (window.setBloodIntensity) window.setBloodIntensity(2.8);
+      } else if (currentState === "CINEMATIC") {
+        targetScale = 0.95;
+        rotSpeedZ = 0.001;
+        electricArcsGroup.visible = false;
+        targetCameraZ = 8.0;
+        if (window.setBloodIntensity) window.setBloodIntensity(0.6);
+      } else { // IDLE
+        currentState = "IDLE";
+        targetScale = 1.0;
+        rotSpeedZ = 0.0015;
+        electricArcsGroup.visible = false;
+        targetCameraZ = 5.8;
+        if (window.setBloodIntensity) window.setBloodIntensity(1.0);
+      }
+    };
+
+    // ——— ANIMATION LOOP ———
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const t = clock.getElapsedTime();
+
+      // Smooth scale & camera interpolation
+      currentScale += (targetScale - currentScale) * 0.05;
+      pentagramGroup.scale.setScalar(currentScale);
+
+      currentCameraZ += (targetCameraZ - currentCameraZ) * 0.03;
+      camera.position.z = currentCameraZ;
+
+      // Rotation — pentagram rotates around Z axis (face-on rotation)
+      pentagramGroup.rotation.z += rotSpeedZ;
+      // Subtle tilt wobble
+      pentagramGroup.rotation.x = Math.sin(t * 0.15) * 0.08;
+      pentagramGroup.rotation.y = Math.sin(t * 0.1 + 0.5) * 0.06;
+
+      // Rune marks counter-rotate slowly
+      runeGroup.rotation.z -= rotSpeedZ * 0.5;
+
+      // Inner core rotates faster
+      icoWire.rotation.x += rotSpeedZ * 3.0;
+      icoWire.rotation.y += rotSpeedZ * 4.0;
+
+      // State specific dynamic effects
+      let pulseMod = 1.0;
+      if (currentState === "THINKING") {
+        pulseMod = 1.8;
+      } else if (currentState === "SPEAKING") {
+        pulseMod = 3.0;
+      } else if (currentState === "LISTENING") {
+        pulseMod = 1.4;
+      }
+
+      const wave1 = Math.sin(t * 1.2 * pulseMod);
+      const wave3 = Math.pow(Math.max(0, Math.sin(t * 0.4 * pulseMod)), 5);
+      const surge = wave3 * 1.5;
+
+      coreSphere.scale.setScalar(1 + surge + Math.sin(t * 5 * pulseMod) * 0.05);
+      coreSphereMat.opacity = Math.min(0.7, Math.max(0.1, (0.12 + wave1 * 0.06 + surge * 0.2)));
+      glowSphere.scale.setScalar(1 + surge * 0.8);
+
+      if (electricArcsGroup.visible) {
+        electricArcsGroup.rotation.y += 0.03;
+        electricArcsGroup.rotation.z += 0.02;
+      }
+
+      dustPoints.rotation.y += 0.0003;
+
+      // Cinematic warp during speaking
+      if (currentState === "SPEAKING") {
+        warpSpeed += (0.8 - warpSpeed) * 0.05;
+      } else {
+        warpSpeed += (0 - warpSpeed) * 0.05;
+      }
+      atmosphereGroup.rotation.y += 0.0001;
+      atmosphereGroup.position.z = (t * warpSpeed * 10) % 20;
+
+      chromaticPass.uniforms.uTime.value = t;
+      chromaticPass.uniforms.uIntensity.value = 0.003 + (warpSpeed * 0.015);
+
+      controls.update();
+      composer.render();
+    }
+
+    animate();
+
+    window.addEventListener("resize", () => {
+      const w = Math.max(1, window.innerWidth);
+      const h = Math.max(1, window.innerHeight);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+      composer.setSize(w, h);
+    });
+
+    // Cinematic Reactor Controls for Setup Wizard
+    window.accelerateReactor = function() {
+      rotSpeedZ = 0.05;
+    };
+
+    window.triggerPulse = function() {
+      const origScale = pentagramGroup.scale.x;
+      let pulseT = 0;
+      const pulseInterval = setInterval(() => {
+        pulseT += 0.1;
+        if (pulseT <= 1) {
+          pentagramGroup.scale.setScalar(origScale + pulseT * 0.3);
+        } else if (pulseT <= 2) {
+          pentagramGroup.scale.setScalar(origScale + 0.3 - (pulseT - 1) * 0.3);
+        } else {
+          clearInterval(pulseInterval);
+          pentagramGroup.scale.setScalar(origScale);
+        }
+      }, 16);
+    };
+
+    window.losePower = function() {
+      const origSpeed = rotSpeedZ;
+      rotSpeedZ = 0.0003;
+      setTimeout(() => {
+        let recoverT = 0;
+        const recoverInterval = setInterval(() => {
+          recoverT += 0.05;
+          if (recoverT <= 1) {
+            rotSpeedZ = 0.0003 + recoverT * (origSpeed - 0.0003);
+          } else {
+            clearInterval(recoverInterval);
+            rotSpeedZ = origSpeed;
+          }
+        }, 16);
+      }, 1000);
+    };
+
+    window.setReactorSpeed = function(speed) {
+      rotSpeedZ = speed * 0.001;
+    };
+
+    window.dissolveReactor = function() {
+      pentagramGroup.scale.setScalar(1.5);
+      setTimeout(() => {
+        pentagramGroup.scale.setScalar(1.0);
+        rotSpeedZ = 0.0015;
+      }, 500);
+    };
+  </script>
+
+  <!-- ——— BLOOD TEXTURE OVERLAY (splatter + drips) ——— -->
+  <script>
+  (function () {
+    const canvas = document.getElementById("blood-overlay");
+    const ctx = canvas.getContext("2d");
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener("resize", resize);
+
+    // static grunge splatter, drawn once to an offscreen layer
+    const splatCanvas = document.createElement("canvas");
+    splatCanvas.width = canvas.width;
+    splatCanvas.height = canvas.height;
+    const sctx = splatCanvas.getContext("2d");
+
+    function drawSplatter() {
+      sctx.clearRect(0, 0, splatCanvas.width, splatCanvas.height);
+      const blobCount = 26;
+      for (let i = 0; i < blobCount; i++) {
+        const x = Math.random() * splatCanvas.width;
+        const y = Math.random() * splatCanvas.height;
+        const r = 4 + Math.random() * 22;
+        const grad = sctx.createRadialGradient(x, y, 0, x, y, r);
+        grad.addColorStop(0, "rgba(120,0,0,0.55)");
+        grad.addColorStop(0.6, "rgba(80,0,0,0.25)");
+        grad.addColorStop(1, "rgba(40,0,0,0)");
+        sctx.fillStyle = grad;
+        sctx.beginPath();
+        sctx.arc(x, y, r, 0, Math.PI * 2);
+        sctx.fill();
+
+        // tiny fleck trail off some blobs
+        if (Math.random() < 0.4) {
+          const flecks = 2 + Math.floor(Math.random() * 4);
+          for (let f = 0; f < flecks; f++) {
+            const fx = x + (Math.random() - 0.5) * r * 3;
+            const fy = y + (Math.random() - 0.5) * r * 3;
+            sctx.fillStyle = "rgba(90,0,0,0.35)";
+            sctx.beginPath();
+            sctx.arc(fx, fy, 1 + Math.random() * 2.5, 0, Math.PI * 2);
+            sctx.fill();
+          }
+        }
+      }
+    }
+    drawSplatter();
+    window.addEventListener("resize", () => {
+      splatCanvas.width = canvas.width;
+      splatCanvas.height = canvas.height;
+      drawSplatter();
+    });
+
+    // dripping streaks
+    const MAX_DRIPS = 10;
+    const drips = [];
+    function spawnDrip() {
+      return {
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * 100,
+        len: 20 + Math.random() * 60,
+        speed: 0.6 + Math.random() * 1.6,
+        width: 2 + Math.random() * 3,
+        alpha: 0.35 + Math.random() * 0.35,
+        life: 0,
+        maxLife: 400 + Math.random() * 500
+      };
+    }
+    for (let i = 0; i < MAX_DRIPS; i++) drips.push(spawnDrip());
+
+    // hooked into window.setSatanState above — 1.0 = normal, higher = heavier/faster drips
+    window.setBloodIntensity = function (mult) {
+      window.__bloodMult = mult;
+    };
+    window.__bloodMult = 1;
+
+    function drawDrips() {
+      for (const d of drips) {
+        d.life++;
+        d.y += d.speed * (window.__bloodMult || 1);
+
+        const grad = ctx.createLinearGradient(d.x, d.y, d.x, d.y + d.len);
+        grad.addColorStop(0, `rgba(160,0,0,${d.alpha})`);
+        grad.addColorStop(1, "rgba(90,0,0,0)");
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = d.width;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(d.x, d.y);
+        ctx.lineTo(d.x, d.y + d.len);
+        ctx.stroke();
+
+        // small pooling drop at the tip
+        ctx.fillStyle = `rgba(140,0,0,${d.alpha * 0.8})`;
+        ctx.beginPath();
+        ctx.arc(d.x, d.y + d.len, d.width * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (d.life > d.maxLife || d.y > canvas.height + 40) {
+          Object.assign(d, spawnDrip());
+          d.y = -20 - Math.random() * 100;
+        }
+      }
+    }
+
+    function loop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(splatCanvas, 0, 0);
+      drawDrips();
+      requestAnimationFrame(loop);
+    }
+    loop();
+  })();
+  </script>
+</body>
+</html>
