@@ -110,7 +110,7 @@ flight_finder
 claude_code
   description: string (required)
   workspace_path: string (optional)
-  Use for all coding, website, project, file-editing, and developer requests.
+  Use for all coding, website, project, file-editing, and ABHINAV SHUKLA requests.
 EXAMPLES:
 
 Goal: "research mechanical engineering and save it to a notepad file"

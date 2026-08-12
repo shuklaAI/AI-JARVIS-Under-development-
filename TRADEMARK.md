@@ -1,7 +1,7 @@
 # SATAN Trademark Notice
 
 `SATAN`, `SATAN AI`, `SATAN AI - Lite`, the SATAN logo, and any related
-brand assets are trademarks or trade dress associated with Suryaansh Tiwari.
+brand assets are trademarks or trade dress associated with ABHINAV SHUKLA.
 
 ## What this means
 

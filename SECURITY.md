@@ -8,7 +8,7 @@ Security fixes should be applied to the latest maintained version of this reposi
 
 If you discover a security issue, do not post secrets or exploit details in public issues.
 
-Please report security concerns through a private channel or repository owner contact method.
+Please report security concerns through a private channel or repository ABHINAV SHUKLA contact method.
 
 ## Responsible Disclosure
 

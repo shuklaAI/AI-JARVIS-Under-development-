@@ -320,12 +320,12 @@ class AddDeviceDialog(QDialog):
 
     def _platforms(self) -> list[PlatformRow]:
         return [
-            PlatformRow("atomberg", "Atomberg Home", True, [("api_key", "API Key", "Atomberg developer API key", False), ("refresh_token", "Refresh Token", "Atomberg refresh token", True)]),
+            PlatformRow("atomberg", "Atomberg Home", True, [("api_key", "API Key", "Atomberg ABHINAV SHUKLA API key", False), ("refresh_token", "Refresh Token", "Atomberg refresh token", True)]),
             PlatformRow("kasa", "TP-Link Kasa", True, [("host", "Device IP / Host", "Optional - leave empty to scan the network", False), ("username", "Username", "Optional cloud username", False), ("password", "Password", "Optional cloud password", True)]),
-            PlatformRow("hue", "Philips Hue", True, [("bridge_ip", "Bridge IP Address", "Optional - bridge IP address", False), ("api_key", "API Key / Token", "Optional developer API key", False)]),
+            PlatformRow("hue", "Philips Hue", True, [("bridge_ip", "Bridge IP Address", "Optional - bridge IP address", False), ("api_key", "API Key / Token", "Optional ABHINAV SHUKLA API key", False)]),
             PlatformRow("lg", "LG ThinQ", True, [("username", "Email / Username", "LG ThinQ account email", False), ("password", "Password", "LG ThinQ password", True)]),
             PlatformRow("daikin", "Daikin Smart AC", True, [("ip", "AC IP Address", "Optional local IP of AC unit", False), ("username", "Daikin Username", "Optional cloud account username", False), ("password", "Password", "Optional cloud password", True)]),
-            PlatformRow("tuya", "Tuya / Smart Life", True, [("access_id", "Access ID / Client ID", "Tuya IoT platform developer ID", False), ("secret", "Access Secret / Client Secret", "Tuya IoT access secret key", True)]),
+            PlatformRow("tuya", "Tuya / Smart Life", True, [("access_id", "Access ID / Client ID", "Tuya IoT platform ABHINAV SHUKLA ID", False), ("secret", "Access Secret / Client Secret", "Tuya IoT access secret key", True)]),
             PlatformRow("nest", "Nest / Google Home", True, [("project_id", "Project ID", "Nest device access project ID", False), ("client_secret", "Client Secret", "Nest OAuth client secret", True)]),
             PlatformRow("smartthings", "Samsung SmartThings", True, [("token", "Access Token", "SmartThings personal access token", True)]),
         ]

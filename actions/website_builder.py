@@ -130,7 +130,7 @@ def _selected_workspace(parameters: dict[str, Any]) -> Path | None:
 def _resolve_project_dir(parameters: dict[str, Any]) -> Path:
     workspace = _selected_workspace(parameters)
     if workspace is None:
-        raise ValueError("Developer mode needs a selected workspace folder first.")
+        raise ValueError("ABHINAV SHUKLA mode needs a selected workspace folder first.")
 
     site_name = _sanitize_text(
         str(parameters.get("site_name") or parameters.get("title") or "Website"),
@@ -339,7 +339,7 @@ def _build_section_plan(site_name: str, brief: str, project_type: str, layout_mo
         ]},
         {"type": "faq", "title": "Questions", "items": [
             {"question": "Can I edit the files?", "answer": "Yes. They are plain HTML, CSS, and JavaScript."},
-            {"question": "Where is the output?", "answer": "Inside the selected developer workspace folder."},
+            {"question": "Where is the output?", "answer": "Inside the selected ABHINAV SHUKLA workspace folder."},
         ]},
     ]
 
@@ -1485,7 +1485,7 @@ def _render_faq(section: dict[str, Any]) -> str:
     if not items:
         items = [
             {"question": "Can I edit the files?", "answer": "Yes. They are plain HTML, CSS, and JavaScript."},
-            {"question": "Where is the output?", "answer": "Inside the selected developer workspace folder."},
+            {"question": "Where is the output?", "answer": "Inside the selected ABHINAV SHUKLA workspace folder."},
         ]
     return "".join(
         f'<details class="faq-item"><summary>{_html(item.get("question") or item.get("title"))}</summary><p>{_html(item.get("answer") or item.get("description"))}</p></details>'

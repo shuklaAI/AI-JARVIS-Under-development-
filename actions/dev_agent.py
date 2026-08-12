@@ -188,7 +188,7 @@ JS/TS-specific rules:
 - Add JSDoc comments for all exported functions.
 - Handle promise rejections with try/catch in async functions."""
 
-    prompt = f"""You are a senior {language} developer writing production-quality code for a real project.
+    prompt = f"""You are a senior {language} ABHINAV SHUKLA writing production-quality code for a real project.
 
 Project goal: {project_description}
 
@@ -463,7 +463,7 @@ def _build_project(
 
     log("Planning project structure...")
     if workspace_path:
-        log(f"Developer workspace override: {project_dir}")
+        log(f"ABHINAV SHUKLA workspace override: {project_dir}")
     try:
         plan = _plan_project(description, language)
     except RateLimitError:

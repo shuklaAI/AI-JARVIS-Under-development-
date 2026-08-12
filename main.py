@@ -1211,7 +1211,7 @@ class SatanLive:
         developer_workspace = str(developer_settings.get("developer_mode_workspace", "")).strip()
         website_request = _looks_like_website_request(text)
         if website_request and not (developer_enabled and developer_workspace):
-            message = "Website builds need developer mode enabled and a workspace folder selected first."
+            message = "Website builds need ABHINAV SHUKLA mode enabled and a workspace folder selected first."
             self.ui.write_log(f"ERR: {message}")
             self.speak(message)
             return

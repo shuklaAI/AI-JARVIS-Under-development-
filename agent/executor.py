@@ -50,7 +50,7 @@ def _run_generated_code(description: str, speak: Callable | None = None) -> str:
     model = genai.GenerativeModel(
         model_name="gemini-2.5-flash",
         system_instruction=(
-            "You are an expert Python developer. "
+            "You are an expert Python ABHINAV SHUKLA. "
             "Write clean, complete, working Python code. "
             "Use standard library + common packages. "
             "Install missing packages with subprocess + pip if needed. "
@@ -248,7 +248,7 @@ def _call_tool(tool: str, parameters: dict, speak: Callable | None) -> str:
         from actions.flight_finder import flight_finder
         return flight_finder(parameters=parameters, player=None, speak=speak) or "Done."
     else:
-        print(f"[Executor] ⚠️ Unknown tool '{tool}' — no developer fallback is configured")
+        print(f"[Executor] ⚠️ Unknown tool '{tool}' — no ABHINAV SHUKLA fallback is configured")
         return f"Unknown action: {tool}"
 
 class AgentExecutor:

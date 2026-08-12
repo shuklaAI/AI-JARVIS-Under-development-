@@ -354,7 +354,7 @@ class WorkspaceStore:
         text_low = text.lower()
         candidates: list[str] = []
         patterns = [
-            r"\bi(?:'m| am)?\s+(?:a|an)?\s*(?:software|python|web|desktop|mobile|full[- ]?stack|frontend|backend|data|ai|ml)?\s*(?:developer|engineer|creator|builder|user)?\s*(?:who\s+)?(?:use|uses|using|like|likes|love|loves|prefer|prefers|own|owns|work with|work on)\s+(.+)",
+            r"\bi(?:'m| am)?\s+(?:a|an)?\s*(?:software|python|web|desktop|mobile|full[- ]?stack|frontend|backend|data|ai|ml)?\s*(?:ABHINAV SHUKLA|engineer|creator|builder|user)?\s*(?:who\s+)?(?:use|uses|using|like|likes|love|loves|prefer|prefers|own|owns|work with|work on)\s+(.+)",
             r"\bmy favorite\s+(.+)",
             r"\bi (?:use|prefer|like|love|own|build|built|am using|work with|work on)\s+(.+)",
             r"\bi'm\s+(.+)",

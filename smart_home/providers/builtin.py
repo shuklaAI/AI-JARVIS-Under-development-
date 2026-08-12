@@ -12,7 +12,7 @@ import requests
 from .base import ProviderField, SmartHomeProvider
 
 
-ATOMBERG_BASE_URL = "https://api.developer.atomberg-iot.com"
+ATOMBERG_BASE_URL = "https://api.ABHINAV SHUKLA.atomberg-iot.com"
 
 
 def _clean_text(value: Any, default: str = "") -> str:
@@ -128,7 +128,7 @@ class AtombergProvider(SmartHomeProvider):
 
     def auth_fields(self) -> list[ProviderField]:
         return [
-            ProviderField("api_key", "API Key", "Atomberg developer API key"),
+            ProviderField("api_key", "API Key", "Atomberg ABHINAV SHUKLA API key"),
             ProviderField("refresh_token", "Refresh Token", "Atomberg refresh token", secret=True),
         ]
 
@@ -466,7 +466,7 @@ class HueProvider(SmartHomeProvider):
     def auth_fields(self) -> list[ProviderField]:
         return [
             ProviderField("bridge_ip", "Bridge IP Address", "Optional - bridge IP address"),
-            ProviderField("api_key", "API Key / Token", "Optional developer API key"),
+            ProviderField("api_key", "API Key / Token", "Optional ABHINAV SHUKLA API key"),
         ]
 
     def authenticate(self, credentials: dict[str, Any]) -> dict[str, Any]:
@@ -591,7 +591,7 @@ class TuyaProvider(SmartHomeProvider):
 
     def auth_fields(self) -> list[ProviderField]:
         return [
-            ProviderField("access_id", "Access ID / Client ID", "Tuya IoT platform developer ID"),
+            ProviderField("access_id", "Access ID / Client ID", "Tuya IoT platform ABHINAV SHUKLA ID"),
             ProviderField("secret", "Access Secret / Client Secret", "Tuya IoT access secret key", secret=True),
         ]
 

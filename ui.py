@@ -3700,7 +3700,7 @@ class LauncherControlPanel(QDialog):
         self._restart_btn = mk_btn("Restart SATAN")
         self._quit_btn = mk_btn("Quit SATAN")
         self._open_app_btn = mk_btn("Open App")
-        self._open_dev_btn = mk_btn("Open Developer Mode")
+        self._open_dev_btn = mk_btn("Open ABHINAV SHUKLA Mode")
 
         self._open_btn.clicked.connect(lambda: self._invoke(self._on_open))
         self._close_btn.clicked.connect(lambda: self._invoke(self._on_close))
@@ -5027,7 +5027,7 @@ class CommandBar(QWidget):
         dev = QPushButton("DEV")
         dev.setFixedSize(46, 34)
         dev.setCursor(Qt.CursorShape.PointingHandCursor)
-        dev.setToolTip("Developer mode")
+        dev.setToolTip("ABHINAV SHUKLA mode")
         dev.setStyleSheet(f"""
             QPushButton {{
                 background: rgba(200, 0, 0, 0.06);
@@ -5105,7 +5105,7 @@ class CommandBar(QWidget):
 class DeveloperModeDialog(QDialog):
     def __init__(self, parent=None, settings: dict | None = None):
         super().__init__(parent)
-        self.setWindowTitle("Developer Mode")
+        self.setWindowTitle("ABHINAV SHUKLA Mode")
         self.setMinimumWidth(420)
         self.setStyleSheet(f"""
             QDialog {{ background: rgba(8,10,14,235); color: {C.WHITE}; border: 1px solid {C.BORDER_B}; }}
@@ -5138,7 +5138,7 @@ class DeveloperModeDialog(QDialog):
         root.setSpacing(12)
         root.setContentsMargins(16, 16, 16, 16)
 
-        title = QLabel("Developer Co-pilot")
+        title = QLabel("ABHINAV SHUKLA Co-pilot")
         title.setFont(QFont("Segoe UI", 11, QFont.Weight.Bold))
         title.setStyleSheet(f"color: {C.PRI};")
         root.addWidget(title)
@@ -5160,7 +5160,7 @@ class DeveloperModeDialog(QDialog):
         folder_row.addWidget(browse)
         root.addLayout(folder_row)
 
-        self._enabled_box = QCheckBox("Turn developer mode on")
+        self._enabled_box = QCheckBox("Turn ABHINAV SHUKLA mode on")
         self._enabled_box.setChecked(self._enabled)
         root.addWidget(self._enabled_box)
 
@@ -5175,7 +5175,7 @@ class DeveloperModeDialog(QDialog):
         root.addLayout(btn_row)
 
     def _browse_folder(self):
-        path = QFileDialog.getExistingDirectory(self, "Select developer workspace", self._workspace or str(BASE_DIR))
+        path = QFileDialog.getExistingDirectory(self, "Select ABHINAV SHUKLA workspace", self._workspace or str(BASE_DIR))
         if path:
             self._workspace_edit.setText(path)
 
@@ -7095,7 +7095,7 @@ class MainWindow(QMainWindow):
         title.setFont(QFont("Courier New", 17, QFont.Weight.Bold))
         title.setStyleSheet(f"color: {C.PRI}; background: transparent;")
         mid.addWidget(title)
-        sub = QLabel("Lite Edition by Suryaansh Tiwari")
+        sub = QLabel("Lite Edition by ABHINAV SHUKLA")
         sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
         sub.setFont(QFont("Courier New", 7))
         sub.setStyleSheet(f"color: {C.PRI_DIM}; background: transparent;")
@@ -7323,7 +7323,7 @@ class MainWindow(QMainWindow):
 
         lay.addWidget(_fl("[F4] Mute  Â·  [F11] Fullscreen"))
         lay.addStretch()
-        lay.addWidget(_fl("Suryaansh Tiwari  Â·  SATAN  Â·  Open Source"))
+        lay.addWidget(_fl("ABHINAV SHUKLA  Â·  SATAN  Â·  Open Source"))
         lay.addStretch()
         lay.addWidget(_fl("Â© STARK INDUSTRIES", C.PRI_DIM))
         return w
@@ -10021,7 +10021,7 @@ class SatanUI:
                 if enabled:
                     workspace_text = workspace or "No folder selected"
                     self._win._developer_status_lbl.setText(
-                        f"Developer mode is on • {workspace_text}"
+                        f"ABHINAV SHUKLA mode is on • {workspace_text}"
                     )
                     self._win._developer_card.show()
                     self._win._developer_card.raise_()
@@ -11482,7 +11482,7 @@ class SatanUI:
                 if enabled:
                     workspace_text = workspace or "No folder selected"
                     self._win._developer_status_lbl.setText(
-                        f"Developer mode is on • {workspace_text}"
+                        f"ABHINAV SHUKLA mode is on • {workspace_text}"
                     )
                     self._win._developer_card.show()
                     self._win._developer_card.raise_()

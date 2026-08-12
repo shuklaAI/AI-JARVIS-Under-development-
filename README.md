@@ -199,6 +199,6 @@ This project is published under a custom source-available license. See `LICENSE`
 
 ## Maintainer
 
-- Suryaansh Tiwari
+- ABHINAV SHUKLA
 
 > Preserve attribution and keep credentials secure when building on top of SATAN Echo.
